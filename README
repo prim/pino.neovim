@@ -1,0 +1,9 @@
+
+call asyncomplete#register_source({
+    \ 'name':'pino',
+    \ 'whitelist': ['*'],
+    \ 'completor': function('pino#completor'),
+    \ })
+
+let g:pino_server_ip = "127.0.0.1"
+let g:pino_server_port = 10240
