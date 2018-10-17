@@ -2,6 +2,7 @@
 
 import socket 
 import json
+import time
 import os
 import traceback
 
@@ -9,7 +10,7 @@ import neovim
 
 def log_info(fmt, *args):
     if args:
-        fmt = fmt % args
+        fmt = time.asctime() + fmt % args
     with open(r"E:\neovim.log", "a+") as f:
         f.write(fmt + "\n")
 
@@ -24,8 +25,13 @@ class Pino(object):
         try:
             log_info("_ %s", locals())
 
-            pino_socket = self._socket_setup()
-            result = self._pino_send_request(pino_socket, *args)
+            try:
+                pino_socket = self._socket_setup()
+                result = self._pino_send_request(pino_socket, *args)
+            except socket.error:
+                self.pino_socket = None
+                pino_socket = self._socket_setup()
+                result = self._pino_send_request(pino_socket, *args)
             log_info("_ result %s", result)
 
             cb and cb(result)
@@ -44,7 +50,7 @@ class Pino(object):
                 else:
                     cmd = "edit! %s" % filename
                 self.vim.command(cmd)
-                lnum = result[0]["lnum"]
+                lnum = result[0]["lnum"] + 1
                 col = result[0]["text"].find(word)
                 self.vim.funcs.cursor(lnum, col)
                 return 
@@ -93,13 +99,14 @@ class Pino(object):
         args = "search_file", args[0]
         self._quickfix(args)
 
-    @neovim.function('PrimCompletor')
-    def completion(self, args):
+    @neovim.command('PinoCompletion', range='', nargs='1', sync=False)
+    def completion(self, args, range):
         try:
             log_info("pino#completor %s", repr(locals()))
-            self.vim.command("echom 'abc'")
-
-            opt, ctx = args
+            # name, ctx = args
+            name, ctx = args[0].split(" ", 1)
+            name = json.loads(name)
+            ctx = json.loads(ctx)
             args = "completion", ctx["typed"], 10
             pino_socket = self._socket_setup()
             result = self._pino_send_request(pino_socket, *args)
@@ -114,7 +121,7 @@ class Pino(object):
                 kwlen = len(kw)
                 startcol = col - kwlen
                 self.vim.command("call asyncomplete#complete(%s, %s, %s, %s, %s)" % (
-                    json.dumps(opt["name"]),
+                    json.dumps(name),
                     json.dumps(ctx),
                     json.dumps(startcol),
                     json.dumps(items),
@@ -159,10 +166,7 @@ class Pino(object):
         length = len(binary)
         binary = b"Content-Length: %d\r\nContent-Type: application/vscode-jsonrpc; charset=utf8\r\n\r\n%s" % ( length, binary)
 
-        try:
-            pino_socket.sendall(binary)
-        except socket.error:
-            return 
+        pino_socket.sendall(binary)
 
         pino_recv_buffer = ""
         while True:
