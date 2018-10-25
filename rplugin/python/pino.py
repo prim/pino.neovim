@@ -103,15 +103,15 @@ class Pino(object):
     def completion(self, args, range):
         try:
             log_info("pino#completor %s", repr(locals()))
-            # name, ctx = args
+            if " " not in args[0]:
+                return 
             name, ctx = args[0].split(" ", 1)
             name = json.loads(name)
             ctx = json.loads(ctx)
             args = "completion", ctx["typed"], 10
             pino_socket = self._socket_setup()
             result = self._pino_send_request(pino_socket, *args)
-            log_info("result %s", result)
-
+            log_info("result %s", repr(result))
 
             if result:
                 items = result.split("\n")
