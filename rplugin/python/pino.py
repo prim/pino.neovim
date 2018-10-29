@@ -125,7 +125,7 @@ class Pino(object):
                     json.dumps(ctx),
                     json.dumps(startcol),
                     json.dumps(items),
-                    0,
+                    1, # force refresh
                     ))
         except Exception, e:
             log_info("error %s", traceback.format_exc())
