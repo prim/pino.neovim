@@ -8,10 +8,12 @@ import traceback
 
 import neovim
 
+_log_path = os.path.join(os.path.dirname(__file__), "pino.neovim.log")
+
 def log_info(fmt, *args):
     if args:
         fmt = time.asctime() + fmt % args
-    with open(r"E:\neovim.log", "a+") as f:
+    with open(_log_path, "a+") as f:
         f.write(fmt + "\n")
 
 @neovim.plugin
@@ -40,6 +42,7 @@ class Pino(object):
 
     def _quickfix(self, args):
         def cb(result):
+            log_info("_quickfix %s %s", args, result)
             word = args[1]
             type_ = args[2]
             if type_ == 0 and len(result) == 1:
@@ -96,7 +99,7 @@ class Pino(object):
 
     @neovim.command('PinoFile', range='', nargs='1', sync=False)
     def file(self, args, range):
-        args = "search_file", args[0]
+        args = "search_file", args[0], 3
         self._quickfix(args)
 
     @neovim.command('PinoCompletion', range='', nargs='1', sync=False)
