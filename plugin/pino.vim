@@ -1,8 +1,8 @@
 
-if exists('g:pino_loaded')
+if exists('g:pino_neovim_loaded')
     finish
 endif
-let g:pino_loaded = 1
+let g:pino_neovim_loaded = 1
 
 nnoremap <leader>gd :execute 'PinoGoto '.expand('<cword>')<cr>
 nnoremap <leader>gg :execute 'PinoGrep '.expand('<cword>')<cr>
